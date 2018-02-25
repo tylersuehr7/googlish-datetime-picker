@@ -8,6 +8,8 @@ import java.util.Calendar;
 /**
  * Copyright © 2017 Tyler Suehr
  *
+ * Defines a way to valid the date and time.
+ *
  * @author Tyler Suehr
  * @version 1.0
  */
