@@ -43,7 +43,9 @@ import java.util.Locale;
  * @author Tyler Suehr
  * @version 1.0
  */
-public class DateTimePickerLayout extends ViewGroup {
+public class DateTimePickerLayout extends ViewGroup implements
+        DatePickerDialog.OnDateSetListener,
+        TimePickerDialog.OnTimeSetListener {
     /* Stores 16dp measurement */
     private final int mSixteenDp;
 
@@ -82,6 +84,16 @@ public class DateTimePickerLayout extends ViewGroup {
 
     /* Store a listener for datetime events */
     private OnDateTimeChooseListener mListener;
+
+    /* Stores a strategy to create the date picker */
+    @NonNull
+    private DatePickerCreateStrategy mDatePickerStrategy =
+            new NowOrChosenDateCreateStrategy();
+
+    /* Stores a strategy to create the date picker */
+    @NonNull
+    private TimePickerCreateStrategy mTimePickerStrategy =
+            new NowOrChosenTimeCreateStrategy();
 
 
     public DateTimePickerLayout(Context context) {
@@ -202,6 +214,68 @@ public class DateTimePickerLayout extends ViewGroup {
         super.dispatchDraw(canvas);
         if ((mIconFlags&1)==1) {
             drawIcon(canvas);
+        }
+    }
+
+    /**
+     * Called when the user chooses a date using the date picker dialog.
+     */
+    @Override
+    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+        // Store the chosen date in the calendar
+        mChosenDate = Calendar.getInstance();
+        mChosenDate.set(Calendar.YEAR, year);
+        mChosenDate.set(Calendar.MONTH, month);
+        mChosenDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        mDateChosen = true;
+
+        // Validate chosen date, if possible
+        if (mAutoValidate) {
+            if (!mValidator.validateDate(mChosenDate)) {
+                mDateChosen = false;
+                mValidator.onDateInvalid(DateTimePickerLayout.this);
+                return;
+            }
+        }
+
+        mDateView.setError(null);
+
+        // Display the formatted chosen date
+        mDateView.setText(mDateFormat.format(mChosenDate.getTime()));
+
+        // Invoke listener, if possible
+        if (mListener != null) {
+            mListener.onDateChosen(mChosenDate);
+        }
+    }
+
+    /**
+     * Called when the user chooses a time using the time picker dialog.
+     */
+    @Override
+    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        // Store the chosen time in the calendar
+        mChosenDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        mChosenDate.set(Calendar.MINUTE, minute);
+        mTimeChosen = true;
+
+        // Validate chosen time, if possible
+        if (mAutoValidate) {
+            if (!mValidator.validateTime(mChosenDate)) {
+                mTimeChosen = false;
+                mValidator.onTimeInvalid(DateTimePickerLayout.this);
+                return;
+            }
+        }
+
+        mTimeView.setError(null);
+
+        // Display the formatted chosen time
+        mTimeView.setText(mTimeFormat.format(mChosenDate.getTime()));
+
+        // Invoke listener, if possible
+        if (mListener != null) {
+            mListener.onTimeChosen(mChosenDate);
         }
     }
 
@@ -419,6 +493,14 @@ public class DateTimePickerLayout extends ViewGroup {
         return mListener;
     }
 
+    public void setDatePickerCreateStrategy(@NonNull DatePickerCreateStrategy strategy) {
+        mDatePickerStrategy = strategy;
+    }
+
+    public void setTimePickerCreateStrategy(@NonNull TimePickerCreateStrategy strategy) {
+        mTimePickerStrategy = strategy;
+    }
+
     private void drawIcon(final Canvas canvas) {
         final int height = mDateView.getMeasuredHeight();
 
@@ -485,84 +567,20 @@ public class DateTimePickerLayout extends ViewGroup {
         return tv;
     }
 
-
+    /**
+     * Implementation of {@link OnClickListener}, used by the date and time
+     * text displays, that will invoke the appropriate strategy to create a
+     * date or time dialog to show.
+     */
     private final OnClickListener mClickHandler = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mChosenDate == null) {
-                mChosenDate = Calendar.getInstance();
-            }
-
-            if (v == mDateView) { // Show the date picker dialog
-                new DatePickerDialog(getContext(),
-                        new DatePickerDialog.OnDateSetListener() {
-                            @Override
-                            public void onDateSet(DatePicker view, int year,
-                                                  int month, int dayOfMonth) {
-                                // Store the chosen date in the calendar
-                                mChosenDate = Calendar.getInstance();
-                                mChosenDate.set(Calendar.YEAR, year);
-                                mChosenDate.set(Calendar.MONTH, month);
-                                mChosenDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                                mDateChosen = true;
-
-                                // Validate chosen date, if possible
-                                if (mAutoValidate) {
-                                    if (!mValidator.validateDate(mChosenDate)) {
-                                        mDateChosen = false;
-                                        mValidator.onDateInvalid(DateTimePickerLayout.this);
-                                        return;
-                                    }
-                                }
-
-                                mDateView.setError(null);
-
-                                // Display the formatted chosen date
-                                mDateView.setText(mDateFormat.format(mChosenDate.getTime()));
-
-                                // Invoke listener, if possible
-                                if (mListener != null) {
-                                    mListener.onDateChosen(mChosenDate);
-                                }
-                            }
-                        },
-                        mChosenDate.get(Calendar.YEAR),
-                        mChosenDate.get(Calendar.MONTH),
-                        mChosenDate.get(Calendar.DAY_OF_MONTH))
-                        .show();
-            } else { // Show the time picker
-                new TimePickerDialog(getContext(),
-                        new TimePickerDialog.OnTimeSetListener() {
-                            @Override
-                            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                                // Store the chosen time in the calendar
-                                mChosenDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                                mChosenDate.set(Calendar.MINUTE, minute);
-                                mTimeChosen = true;
-
-                                // Validate chosen time, if possible
-                                if (mAutoValidate) {
-                                    if (!mValidator.validateTime(mChosenDate)) {
-                                        mTimeChosen = false;
-                                        mValidator.onTimeInvalid(DateTimePickerLayout.this);
-                                        return;
-                                    }
-                                }
-
-                                mTimeView.setError(null);
-
-                                // Display the formatted chosen time
-                                mTimeView.setText(mTimeFormat.format(mChosenDate.getTime()));
-
-                                // Invoke listener, if possible
-                                if (mListener != null) {
-                                    mListener.onTimeChosen(mChosenDate);
-                                }
-                            }
-                        },
-                        mChosenDate.get(Calendar.HOUR),
-                        mChosenDate.get(Calendar.MINUTE),
-                        false).show();
+            if (v == mDateView) { // Show date picker dialog
+                mDatePickerStrategy.createPicker(getContext(),
+                        DateTimePickerLayout.this).show();
+            } else { // Show time picker dialog
+                mTimePickerStrategy.createPicker(getContext(),
+                        DateTimePickerLayout.this).show();
             }
         }
     };
@@ -617,6 +635,46 @@ public class DateTimePickerLayout extends ViewGroup {
             // Display error on the time text view
             mTimeView.setError("Time is invalid!");
             mTimeView.setText(mDefaultTimeErrorText);
+        }
+    }
+
+
+    /**
+     * Nested inner-class implementation of {@link DatePickerCreateStrategy}
+     * that affords creating a basic Android date picker with the default date
+     * set to now or a valid previously chosen date.
+     */
+    private final class NowOrChosenDateCreateStrategy implements DatePickerCreateStrategy {
+        @Override
+        public DatePickerDialog createPicker(Context c,
+                                             DatePickerDialog.OnDateSetListener listener) {
+            if (mChosenDate == null) {
+                mChosenDate = Calendar.getInstance();
+            }
+            return new DatePickerDialog(getContext(), listener,
+                    mChosenDate.get(Calendar.YEAR),
+                    mChosenDate.get(Calendar.MONTH),
+                    mChosenDate.get(Calendar.DAY_OF_MONTH));
+        }
+    }
+
+
+    /**
+     * Nested inner-class implementation of {@link DatePickerCreateStrategy}
+     * that affords creating a basic Android time picker with the default time
+     * set to now or a valid previously chosen time.
+     */
+    private final class NowOrChosenTimeCreateStrategy implements TimePickerCreateStrategy {
+        @Override
+        public TimePickerDialog createPicker(Context c,
+                                             TimePickerDialog.OnTimeSetListener listener) {
+            if (mChosenDate == null) {
+                mChosenDate = Calendar.getInstance();
+            }
+            return new TimePickerDialog(getContext(), listener,
+                    mChosenDate.get(Calendar.HOUR),
+                    mChosenDate.get(Calendar.MINUTE),
+                    false);
         }
     }
 }
