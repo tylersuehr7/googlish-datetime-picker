@@ -47,9 +47,13 @@ public class DateTimePickerLayout extends ViewGroup {
     private TextView mDateView;
     private TextView mTimeView;
 
+    private CharSequence mDefaultDateText;
+    private CharSequence mDefaultTimeText;
+
     private int mIconSize;
     private Drawable mIcon;
-    private boolean mShowIcon = true;
+    /* 1 = show icon, 2 = use icon spacing */
+    private byte mIconFlags = 0;
 
     /* Stores the date and time chosen */
     private Calendar mChosenDate;
@@ -76,13 +80,15 @@ public class DateTimePickerLayout extends ViewGroup {
         mSixteenDp = (int)(16f * dm.density);
 
         // Defaults for date
+        mDefaultDateText = "Choose Date";
         mDateView = createTextView();
-        mDateView.setText("Choose Date");
+        mDateView.setText(mDefaultDateText);
         addView(mDateView);
 
         // Defaults for time
+        mDefaultTimeText = "Choose Time";
         mTimeView = createTextView();
-        mTimeView.setText("Choose Time");
+        mTimeView.setText(mDefaultTimeText);
         addView(mTimeView);
 
         // Defaults for icon
@@ -122,7 +128,7 @@ public class DateTimePickerLayout extends ViewGroup {
         // We want to specifically layout the date view to
         // the right of the drawn icon
         int left = ViewCompat.getPaddingStart(this);
-        if (mShowIcon) {
+        if (adjustForIcon()) {
             left += mIconSize + (mSixteenDp << 1);
         }
         int top = getPaddingTop();
@@ -142,11 +148,17 @@ public class DateTimePickerLayout extends ViewGroup {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
-        if (mShowIcon) {
+        if ((mIconFlags&1)==1) {
             drawIcon(canvas);
         }
     }
 
+    /**
+     * Checks if the current chose datetime is valid using
+     * the validator {@link #mValidator}.
+     *
+     * @return True if chosen datetime is valid
+     */
     public boolean isValidDateTime() {
         // Use the validator to validate date and time
         if (!mValidator.validateDate(mChosenDate)) {
@@ -159,8 +171,56 @@ public class DateTimePickerLayout extends ViewGroup {
         return true;
     }
 
+    /**
+     * Gets the chosen datetime.
+     * @return {@link Calendar}
+     */
     public Calendar getChosenDateTime() {
         return mChosenDate;
+    }
+
+    /**
+     * Clears both the chosen date and time and resets
+     * all the values set by them.
+     */
+    public void clearChosenDateTime() {
+        mChosenDate = null;
+        mDateChosen = false;
+        mTimeChosen = false;
+
+        mDateView.setText(mDefaultDateText);
+        mTimeView.setText(mDefaultTimeText);
+
+        mDateView.setError(null);
+        mTimeView.setError(null);
+    }
+
+    /**
+     * Visibly shows the icon {@link #mIcon}.
+     * Note: True will cause adjustment for the needed spacing.
+     *
+     * @param show True if icon show be visibly shown
+     */
+    public void showIcon(boolean show) {
+        if (show) {
+            mIconFlags |= 1;
+        } else {
+            mIconFlags &= ~1;
+        }
+    }
+
+    /**
+     * Makes adjustment for the needed spacing for the icon to
+     * be shown, but does NOT make the icon visible.
+     *
+     * @param use True if should adjust for icon spacing
+     */
+    public void useIconSpacing(boolean use) {
+        if (use) {
+            mIconFlags |= 2;
+        } else {
+            mIconFlags &= ~2;
+        }
     }
 
     private void drawIcon(final Canvas canvas) {
@@ -177,7 +237,7 @@ public class DateTimePickerLayout extends ViewGroup {
 
         // If we're showing the icon, we want to adhere to Material
         // Design spacing principles... iconSize + 24dp
-        if (mShowIcon) {
+        if (adjustForIcon()) {
             neededSize += mIconSize + (mSixteenDp << 1);
         }
 
@@ -192,6 +252,10 @@ public class DateTimePickerLayout extends ViewGroup {
 
     private int getNeededHeight() {
         return Math.max(mIconSize, mDateView.getMeasuredHeight());
+    }
+
+    private boolean adjustForIcon() {
+        return (mIconFlags&1)==1 || (mIconFlags&2)==2;
     }
 
     private TextView createTextView() {
@@ -301,6 +365,10 @@ public class DateTimePickerLayout extends ViewGroup {
     private final class DefaultDateTimeValidator implements DateTimeValidator {
         @Override
         public boolean validateDate(@Nullable Calendar chosenDate) {
+            if (!mDateChosen || chosenDate == null) {
+                return false;
+            }
+
             // Make sure to only compare date and not time
             // so that user can pick the current day
             final Calendar now = Calendar.getInstance();
@@ -313,14 +381,17 @@ public class DateTimePickerLayout extends ViewGroup {
             temp.clear(Calendar.MINUTE);
             temp.clear(Calendar.SECOND);
 
-            return chosenDate == null
-                    || temp.after(now) || temp.equals(now);
+            return temp.after(now) || temp.equals(now);
         }
 
         @Override
         public boolean validateTime(@Nullable Calendar chosenTime) {
+            if (!mTimeChosen || chosenTime == null) {
+                return false;
+            }
+
             final Calendar now = Calendar.getInstance();
-            return chosenTime == null || mChosenDate.after(now);
+            return mChosenDate.after(now);
         }
 
         @Override
