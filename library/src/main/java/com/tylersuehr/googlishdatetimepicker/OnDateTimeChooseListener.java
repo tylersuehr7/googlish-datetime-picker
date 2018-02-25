@@ -12,7 +12,7 @@ import java.util.Calendar;
  * @author Tyler Suehr
  * @version 1.0
  */
-public interface DateTimeChooseListener {
+public interface OnDateTimeChooseListener {
     void onDateChosen(@NonNull Calendar chosenDate);
     void onTimeChosen(@NonNull Calendar chosenTime);
 }
