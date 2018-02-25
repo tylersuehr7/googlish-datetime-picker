@@ -49,11 +49,15 @@ public class DateTimePickerLayout extends ViewGroup {
 
     private CharSequence mDefaultDateText;
     private CharSequence mDefaultTimeText;
+    private CharSequence mDefaultDateErrorText;
+    private CharSequence mDefaultTimeErrorText;
+
+    private int mTextPadding;
 
     private int mIconSize;
     private Drawable mIcon;
     /* 1 = show icon, 2 = use icon spacing */
-    private byte mIconFlags = 0;
+    private byte mIconFlags = 1;
 
     /* Stores the date and time chosen */
     private Calendar mChosenDate;
@@ -64,6 +68,9 @@ public class DateTimePickerLayout extends ViewGroup {
     private DateTimeValidator mValidator =
             new DefaultDateTimeValidator();
     private boolean mValidateWhenChosen = false;
+
+    /* Store a listener for datetime events */
+    private OnDateTimeChooseListener mListener;
 
 
     public DateTimePickerLayout(Context context) {
@@ -78,6 +85,31 @@ public class DateTimePickerLayout extends ViewGroup {
         super(c, attrs, defStyleAttr);
         final DisplayMetrics dm = getResources().getDisplayMetrics();
         mSixteenDp = (int)(16f * dm.density);
+
+        // Set XML attributes
+        final TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.DateTimePickerLayout);
+        mDefaultDateText = a.hasValue(R.styleable.DateTimePickerLayout_dtp_defaultDate)
+                ? a.getText(R.styleable.DateTimePickerLayout_dtp_defaultDate)
+                : "Choose Date";
+
+        mDefaultTimeText = a.hasValue(R.styleable.DateTimePickerLayout_dtp_defaultTime)
+                ? a.getText(R.styleable.DateTimePickerLayout_dtp_defaultTime)
+                : "Choose Time";
+
+        mDefaultDateErrorText = a.hasValue(R.styleable.DateTimePickerLayout_dtp_defaultDateError)
+                ? a.getText(R.styleable.DateTimePickerLayout_dtp_defaultDateError)
+                : "Invalid Date!";
+
+        mDefaultTimeErrorText = a.hasValue(R.styleable.DateTimePickerLayout_dtp_defaultTimeError)
+                ? a.getText(R.styleable.DateTimePickerLayout_dtp_defaultTimeError)
+                : "Invalid Time!";
+
+        mValidateWhenChosen = a.getBoolean(R.styleable.DateTimePickerLayout_dtp_enableAutoValidate, false);
+        setShowIcon(a.getBoolean(R.styleable.DateTimePickerLayout_dtp_showIcon, true));
+        setShowIconSpacing(a.getBoolean(R.styleable.DateTimePickerLayout_dtp_showIconSpacing, true));
+        a.recycle();
+
+        mTextPadding = mSixteenDp;
 
         // Defaults for date
         mDefaultDateText = "Choose Date";
@@ -201,7 +233,7 @@ public class DateTimePickerLayout extends ViewGroup {
      *
      * @param show True if icon show be visibly shown
      */
-    public void showIcon(boolean show) {
+    public void setShowIcon(boolean show) {
         if (show) {
             mIconFlags |= 1;
         } else {
@@ -213,21 +245,29 @@ public class DateTimePickerLayout extends ViewGroup {
      * Makes adjustment for the needed spacing for the icon to
      * be shown, but does NOT make the icon visible.
      *
-     * @param use True if should adjust for icon spacing
+     * @param show True if should adjust for icon spacing
      */
-    public void useIconSpacing(boolean use) {
-        if (use) {
+    public void setShowIconSpacing(boolean show) {
+        if (show) {
             mIconFlags |= 2;
         } else {
             mIconFlags &= ~2;
         }
     }
 
+    public void setOnDateTimeChooseListener(OnDateTimeChooseListener listener) {
+        mListener = listener;
+    }
+
+    public OnDateTimeChooseListener getOnDateTimeChooseListener() {
+        return mListener;
+    }
+
     private void drawIcon(final Canvas canvas) {
         canvas.save();
         canvas.translate(
-                ViewCompat.getPaddingStart(this),
-                getPaddingTop());
+                ViewCompat.getPaddingStart(mDateView),
+                mDateView.getPaddingTop());
         mIcon.draw(canvas);
         canvas.restore();
     }
@@ -268,12 +308,12 @@ public class DateTimePickerLayout extends ViewGroup {
 
         // Create the text view and set it up to be clickable
         final TextView tv = new TextView(getContext());
+        tv.setPadding(mTextPadding, mTextPadding,
+                mTextPadding, mTextPadding);
         tv.setLayoutParams(new ViewGroup.LayoutParams(
                 LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT
         ));
-
-//        tv.setPadding(mEightDp, mEightDp, mEightDp, mEightDp);
 
         tv.setClickable(true);
         tv.setBackground(dr);
@@ -282,7 +322,6 @@ public class DateTimePickerLayout extends ViewGroup {
         tv.setTypeface(mTypeface);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
         tv.setTextColor(Color.BLACK);
-
         return tv;
     }
 
@@ -305,20 +344,26 @@ public class DateTimePickerLayout extends ViewGroup {
                                 mChosenDate.set(Calendar.YEAR, year);
                                 mChosenDate.set(Calendar.MONTH, month);
                                 mChosenDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                                mDateChosen = true;
 
                                 // Validate chosen date, if possible
-                                if (mValidateWhenChosen && mValidator != null) {
+                                if (mValidateWhenChosen) {
                                     if (!mValidator.validateDate(mChosenDate)) {
+                                        mDateChosen = false;
                                         mValidator.onDateInvalid(DateTimePickerLayout.this);
                                         return;
                                     }
                                 }
 
                                 mDateView.setError(null);
-                                mDateChosen = true;
 
                                 // Display the formatted chosen date
                                 mDateView.setText(mDateFormat.format(mChosenDate.getTime()));
+
+                                // Invoke listener, if possible
+                                if (mListener != null) {
+                                    mListener.onDateChosen(mChosenDate);
+                                }
                             }
                         },
                         mChosenDate.get(Calendar.YEAR),
@@ -333,20 +378,26 @@ public class DateTimePickerLayout extends ViewGroup {
                                 // Store the chosen time in the calendar
                                 mChosenDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 mChosenDate.set(Calendar.MINUTE, minute);
+                                mTimeChosen = true;
 
                                 // Validate chosen time, if possible
-                                if (mValidateWhenChosen && mValidator != null) {
+                                if (mValidateWhenChosen) {
                                     if (!mValidator.validateTime(mChosenDate)) {
+                                        mTimeChosen = false;
                                         mValidator.onTimeInvalid(DateTimePickerLayout.this);
                                         return;
                                     }
                                 }
 
                                 mTimeView.setError(null);
-                                mTimeChosen = true;
 
                                 // Display the formatted chosen time
                                 mTimeView.setText(mTimeFormat.format(mChosenDate.getTime()));
+
+                                // Invoke listener, if possible
+                                if (mListener != null) {
+                                    mListener.onTimeChosen(mChosenDate);
+                                }
                             }
                         },
                         mChosenDate.get(Calendar.HOUR),
@@ -398,12 +449,14 @@ public class DateTimePickerLayout extends ViewGroup {
         public void onDateInvalid(@NonNull DateTimePickerLayout view) {
             // Display error on the date text view
             mDateView.setError("Date is invalid!");
+            mDateView.setText(mDefaultDateErrorText);
         }
 
         @Override
         public void onTimeInvalid(@NonNull DateTimePickerLayout view) {
             // Display error on the time text view
             mTimeView.setError("Time is invalid!");
+            mTimeView.setText(mDefaultTimeErrorText);
         }
     }
 }
