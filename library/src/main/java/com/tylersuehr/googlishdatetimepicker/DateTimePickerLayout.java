@@ -8,6 +8,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
@@ -53,6 +55,11 @@ public class DateTimePickerLayout extends ViewGroup {
     private Calendar mChosenDate;
     private boolean mDateChosen;
     private boolean mTimeChosen;
+
+    @NonNull
+    private DateTimeValidator mValidator =
+            new DefaultDateTimeValidator();
+    private boolean mValidateWhenChosen = false;
 
 
     public DateTimePickerLayout(Context context) {
@@ -140,6 +147,22 @@ public class DateTimePickerLayout extends ViewGroup {
         }
     }
 
+    public boolean isValidDateTime() {
+        // Use the validator to validate date and time
+        if (!mValidator.validateDate(mChosenDate)) {
+            mValidator.onDateInvalid(this);
+            return false;
+        } else if (!mValidator.validateTime(mChosenDate)) {
+            mValidator.onTimeInvalid(this);
+            return false;
+        }
+        return true;
+    }
+
+    public Calendar getChosenDateTime() {
+        return mChosenDate;
+    }
+
     private void drawIcon(final Canvas canvas) {
         canvas.save();
         canvas.translate(
@@ -200,7 +223,6 @@ public class DateTimePickerLayout extends ViewGroup {
     }
 
 
-
     private final OnClickListener mClickHandler = new OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -219,6 +241,16 @@ public class DateTimePickerLayout extends ViewGroup {
                                 mChosenDate.set(Calendar.YEAR, year);
                                 mChosenDate.set(Calendar.MONTH, month);
                                 mChosenDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                                // Validate chosen date, if possible
+                                if (mValidateWhenChosen && mValidator != null) {
+                                    if (!mValidator.validateDate(mChosenDate)) {
+                                        mValidator.onDateInvalid(DateTimePickerLayout.this);
+                                        return;
+                                    }
+                                }
+
+                                mDateView.setError(null);
                                 mDateChosen = true;
 
                                 // Display the formatted chosen date
@@ -237,6 +269,16 @@ public class DateTimePickerLayout extends ViewGroup {
                                 // Store the chosen time in the calendar
                                 mChosenDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                 mChosenDate.set(Calendar.MINUTE, minute);
+
+                                // Validate chosen time, if possible
+                                if (mValidateWhenChosen && mValidator != null) {
+                                    if (!mValidator.validateTime(mChosenDate)) {
+                                        mValidator.onTimeInvalid(DateTimePickerLayout.this);
+                                        return;
+                                    }
+                                }
+
+                                mTimeView.setError(null);
                                 mTimeChosen = true;
 
                                 // Display the formatted chosen time
@@ -249,4 +291,48 @@ public class DateTimePickerLayout extends ViewGroup {
             }
         }
     };
+
+
+
+    /**
+     * Nested inner-class implementation of {@link DateTimeValidator}
+     * that affords basic validation.
+     */
+    private final class DefaultDateTimeValidator implements DateTimeValidator {
+        @Override
+        public boolean validateDate(@Nullable Calendar chosenDate) {
+            // Make sure to only compare date and not time
+            // so that user can pick the current day
+            final Calendar now = Calendar.getInstance();
+            now.clear(Calendar.HOUR_OF_DAY);
+            now.clear(Calendar.MINUTE);
+            now.clear(Calendar.SECOND);
+
+            final Calendar temp = (Calendar)mChosenDate.clone();
+            temp.clear(Calendar.HOUR_OF_DAY);
+            temp.clear(Calendar.MINUTE);
+            temp.clear(Calendar.SECOND);
+
+            return chosenDate == null
+                    || temp.after(now) || temp.equals(now);
+        }
+
+        @Override
+        public boolean validateTime(@Nullable Calendar chosenTime) {
+            final Calendar now = Calendar.getInstance();
+            return chosenTime == null || mChosenDate.after(now);
+        }
+
+        @Override
+        public void onDateInvalid(@NonNull DateTimePickerLayout view) {
+            // Display error on the date text view
+            mDateView.setError("Date is invalid!");
+        }
+
+        @Override
+        public void onTimeInvalid(@NonNull DateTimePickerLayout view) {
+            // Display error on the time text view
+            mTimeView.setError("Time is invalid!");
+        }
+    }
 }
