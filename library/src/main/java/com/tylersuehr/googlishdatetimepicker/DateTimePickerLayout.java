@@ -135,7 +135,7 @@ public class DateTimePickerLayout extends ViewGroup {
         mIcon.setBounds(0, 0, mIconSize, mIconSize);
         mIcon.setColorFilter(mIconColor, PorterDuff.Mode.SRC_ATOP);
 
-        mAutoValidate = a.getBoolean(R.styleable.DateTimePickerLayout_dtp_enableAutoValidate, false);
+        mAutoValidate = a.getBoolean(R.styleable.DateTimePickerLayout_dtp_enableAutoValidate, true);
         setShowIcon(a.getBoolean(R.styleable.DateTimePickerLayout_dtp_showIcon, true));
         setShowIconSpacing(a.getBoolean(R.styleable.DateTimePickerLayout_dtp_showIconSpacing, true));
         a.recycle();

@@ -9,5 +9,6 @@
         android:id="@+id/datetime_picker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:dtp_enableAutoValidate="true"/>
+        android:textColor="#212121"
+        app:dtp_iconColor="#757575"/>
 </LinearLayout>
