@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="DateTimePickerLayout">
-        <attr name="dtp_showIcon" format="boolean"/>
-        <attr name="dtp_showIconSpacing" format="boolean"/>
+        <attr name="android:textColor"/>
+
         <attr name="dtp_enableAutoValidate" format="boolean"/>
+        <attr name="dtp_textMargin" format="dimension"/>
+        <attr name="dtp_dateFormat" format="string"/>
+        <attr name="dtp_timeFormat" format="string"/>
 
         <attr name="dtp_defaultDate" format="string"/>
         <attr name="dtp_defaultTime" format="string"/>
         <attr name="dtp_defaultDateError" format="string"/>
         <attr name="dtp_defaultTimeError" format="string"/>
+
+        <attr name="dtp_icon" format="reference"/>
+        <attr name="dtp_iconSize" format="dimension"/>
+        <attr name="dtp_iconColor" format="color"/>
+        <attr name="dtp_showIcon" format="boolean"/>
+        <attr name="dtp_showIconSpacing" format="boolean"/>
     </declare-styleable>
 </resources>
