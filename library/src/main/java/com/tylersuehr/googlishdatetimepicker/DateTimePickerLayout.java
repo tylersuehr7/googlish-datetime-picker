@@ -141,15 +141,13 @@ public class DateTimePickerLayout extends ViewGroup {
         a.recycle();
 
         // Setup the date text view
-        mDateView = createTextView();
+        mDateView = createTextViewWithProperties();
         mDateView.setText(mDefaultDateText);
-        mDateView.setTextColor(mTextColor);
         addView(mDateView);
 
         // Setup the time text view
-        mTimeView = createTextView();
+        mTimeView = createTextViewWithProperties();
         mTimeView.setText(mDefaultTimeText);
-        mTimeView.setTextColor(mTextColor);
         addView(mTimeView);
     }
 
@@ -458,7 +456,7 @@ public class DateTimePickerLayout extends ViewGroup {
         return (mIconFlags&1)==1 || (mIconFlags&2)==2;
     }
 
-    private TextView createTextView() {
+    private TextView createTextViewWithProperties() {
         // Get the 'selectable item' background from attributes
         final Drawable dr;
         TypedArray a = getContext().obtainStyledAttributes(
@@ -479,9 +477,9 @@ public class DateTimePickerLayout extends ViewGroup {
         tv.setBackground(dr);
         tv.setOnClickListener(mClickHandler);
 
-        tv.setTypeface(mTypeface);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
-        tv.setTextColor(Color.BLACK);
+        tv.setTypeface(mTypeface);
+        tv.setTextColor(mTextColor);
         return tv;
     }
 
