@@ -158,7 +158,7 @@ public class DateTimePickerLayout extends ViewGroup {
         measureChildren(widthMeasureSpec, heightMeasureSpec);
 
         // Account for the needed height only
-        int heightSize = getNeededHeight() + getPaddingTop() + getPaddingBottom();
+        int heightSize = getNeededHeight();
 
         // If no specific size is given, just use the needed width
         final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
@@ -166,9 +166,7 @@ public class DateTimePickerLayout extends ViewGroup {
         switch (widthMode) {
             case MeasureSpec.UNSPECIFIED:
             case MeasureSpec.AT_MOST:
-                widthSize = getNeededWidth()
-                        + ViewCompat.getPaddingStart(this)
-                        + ViewCompat.getPaddingEnd(this);
+                widthSize = getNeededWidth();
                 break;
             case MeasureSpec.EXACTLY:
                 widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -422,10 +420,14 @@ public class DateTimePickerLayout extends ViewGroup {
     }
 
     private void drawIcon(final Canvas canvas) {
+        final int height = mDateView.getMeasuredHeight();
+
+        float dx = ViewCompat.getPaddingStart(mDateView);
+        float dy = (mIconSize < height)
+                ? ((height - mIconSize) >> 1) + 2 : 0;
+
         canvas.save();
-        canvas.translate(
-                ViewCompat.getPaddingStart(mDateView),
-                mDateView.getPaddingTop());
+        canvas.translate(dx,dy);
         mIcon.draw(canvas);
         canvas.restore();
     }
