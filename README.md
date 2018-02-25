@@ -5,6 +5,22 @@ A highly customizable Android ViewGroup that allows you to choose a date and tim
 <img src="https://github.com/tylersuehr7/googlish-datetime-picker/blob/master/img_screen1.png" width="200"> <img src="https://github.com/tylersuehr7/googlish-datetime-picker/blob/master/img_screen2.png" width="200"> <img src="https://github.com/tylersuehr7/googlish-datetime-picker/blob/master/img_screen3.png" width="200"> <img src="https://github.com/tylersuehr7/googlish-datetime-picker/blob/master/img_screen4.png" width="200">
 
 ## Usage
+*Step 1: Add to root build.gradle file*
+```java
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+
+*Step 2: Add to dependencies*
+```java
+dependencies {
+    compile 'com.github.tylersuehr7:googlish-datetime-picker:1.0'
+}
+```
 
 ## Using the `DateTimePickerLayout`
 The purpose of this library is to afford an easy-to-use datetime picker view widget that allows the user to chose a date and time respectively while being able to validate the chosen date or time. To achieve this functionality, the `DateTimePickerLayout` `ViewGroup` is used.
