@@ -1,6 +1,5 @@
 package com.tylersuehr.googlishdatetimepicker;
 
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.Calendar;
@@ -16,6 +15,4 @@ import java.util.Calendar;
 public interface DateTimeValidator {
     boolean validateDate(@Nullable Calendar chosenDate);
     boolean validateTime(@Nullable Calendar chosenTime);
-    void onDateInvalid(@NonNull DateTimePickerLayout view);
-    void onTimeInvalid(@NonNull DateTimePickerLayout view);
 }

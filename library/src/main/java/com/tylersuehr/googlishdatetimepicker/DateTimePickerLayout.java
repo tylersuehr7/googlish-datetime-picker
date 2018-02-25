@@ -85,6 +85,11 @@ public class DateTimePickerLayout extends ViewGroup implements
     /* Store a listener for datetime events */
     private OnDateTimeChooseListener mListener;
 
+    /* Stores a strategy to handle invalid dates and times */
+    @NonNull
+    private InvalidDateTimeStrategy mInvalidStrategy =
+            new DefaultInvalidDateTimeStrategy();
+
     /* Stores a strategy to create the date picker */
     @NonNull
     private DatePickerCreateStrategy mDatePickerStrategy =
@@ -233,7 +238,7 @@ public class DateTimePickerLayout extends ViewGroup implements
         if (mAutoValidate) {
             if (!mValidator.validateDate(mChosenDate)) {
                 mDateChosen = false;
-                mValidator.onDateInvalid(DateTimePickerLayout.this);
+                mInvalidStrategy.onInvalidDate(this, mDateView);
                 return;
             }
         }
@@ -263,7 +268,7 @@ public class DateTimePickerLayout extends ViewGroup implements
         if (mAutoValidate) {
             if (!mValidator.validateTime(mChosenDate)) {
                 mTimeChosen = false;
-                mValidator.onTimeInvalid(DateTimePickerLayout.this);
+                mInvalidStrategy.onInvalidTime(this, mTimeView);
                 return;
             }
         }
@@ -288,10 +293,10 @@ public class DateTimePickerLayout extends ViewGroup implements
     public boolean isValidDateTime() {
         // Use the validator to validate date and time
         if (!mValidator.validateDate(mChosenDate)) {
-            mValidator.onDateInvalid(this);
+            mInvalidStrategy.onInvalidDate(this, mDateView);
             return false;
         } else if (!mValidator.validateTime(mChosenDate)) {
-            mValidator.onTimeInvalid(this);
+            mInvalidStrategy.onInvalidTime(this, mTimeView);
             return false;
         }
         return true;
@@ -501,6 +506,10 @@ public class DateTimePickerLayout extends ViewGroup implements
         mTimePickerStrategy = strategy;
     }
 
+    public void setInvalidDateTimeStrategy(@NonNull InvalidDateTimeStrategy strategy) {
+        mInvalidStrategy = strategy;
+    }
+
     private void drawIcon(final Canvas canvas) {
         final int height = mDateView.getMeasuredHeight();
 
@@ -622,16 +631,23 @@ public class DateTimePickerLayout extends ViewGroup implements
             final Calendar now = Calendar.getInstance();
             return mChosenDate.after(now);
         }
+    }
 
+
+    /**
+     * Nested inner-class implementation of {@link InvalidDateTimeStrategy}
+     * that shows the default error message and sets the text view with error.
+     */
+    private final class DefaultInvalidDateTimeStrategy implements InvalidDateTimeStrategy {
         @Override
-        public void onDateInvalid(@NonNull DateTimePickerLayout view) {
+        public void onInvalidDate(DateTimePickerLayout parent, TextView view) {
             // Display error on the date text view
             mDateView.setError("Date is invalid!");
             mDateView.setText(mDefaultDateErrorText);
         }
 
         @Override
-        public void onTimeInvalid(@NonNull DateTimePickerLayout view) {
+        public void onInvalidTime(DateTimePickerLayout parent, TextView view) {
             // Display error on the time text view
             mTimeView.setError("Time is invalid!");
             mTimeView.setText(mDefaultTimeErrorText);
