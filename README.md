@@ -18,7 +18,7 @@ allprojects {
 *Step 2: Add to dependencies*
 ```java
 dependencies {
-    compile 'com.github.tylersuehr7:googlish-datetime-picker:1.0'
+    compile 'com.github.tylersuehr7:googlish-datetime-picker:1.1'
 }
 ```
 
@@ -41,6 +41,7 @@ Here is a table of all the XML attributes available for this view:
 Attribute | Type | Summary
 --- | :---: | ---
 `android:textColor` | `color` | Text color of the date and time displays.
+`android:textSize` | `dimen` | Text size of the date and time displays.
 `dtp_enableAutoValidation` | `boolean` | Enables validation as soon as a date or time is chosen.
 `dtp_textMargin` | `dimen` | The spacing around the date and time displays.
 `dtp_dateFormat` | `string` | The simple date format string used by the date display.
@@ -107,6 +108,8 @@ Method | Summary
 `setTextPadding(int)` | Sets the padding around the date and time displays.
 `getTextColor()` | Returns the text color of the date and time displays.
 `setTextColor(int)` | Sets the text color of the date and time displays.
+`getTextSize()` | Returns the text size of the date and time displays.
+`setTextSize(float)` | Sets the text size of the date and time displays.
 `getIconSize()` | Returns the size of the icon.
 `setIconSize(int)` | Sets the size of the icon.
 `getIcon()` | Returns the icon drawable.
