@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.Px;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.text.TextUtils;
@@ -65,6 +66,7 @@ public class DateTimePickerLayout extends ViewGroup implements
     private Typeface mTypeface = Typeface.DEFAULT;
     private int mTextPadding;
     private int mTextColor;
+    private float mTextSize;
 
     private int mIconSize;
     private int mIconColor;
@@ -142,6 +144,7 @@ public class DateTimePickerLayout extends ViewGroup implements
                 ? a.getText(R.styleable.DateTimePickerLayout_dtp_defaultTimeError)
                 : "Invalid Time!";
         mTextColor = a.getColor(R.styleable.DateTimePickerLayout_android_textColor, Color.BLACK);
+        mTextSize = a.getDimension(R.styleable.DateTimePickerLayout_android_textSize, (int)(16f * dm.scaledDensity));
 
         mIconSize = a.getDimensionPixelSize(R.styleable.DateTimePickerLayout_dtp_iconSize, (int)(24f * dm.density));
         mIconColor = a.getColor(R.styleable.DateTimePickerLayout_dtp_iconColor, Color.BLACK);
@@ -461,6 +464,16 @@ public class DateTimePickerLayout extends ViewGroup implements
         mTimeView.setTextColor(color);
     }
 
+    public float getTextSize() {
+        return mTextSize;
+    }
+
+    public void setTextSize(float size) {
+        mTextSize = size;
+        mDateView.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
+        mTimeView.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
+    }
+
     public int getIconSize() {
         return mIconSize;
     }
@@ -570,7 +583,7 @@ public class DateTimePickerLayout extends ViewGroup implements
         tv.setBackground(dr);
         tv.setOnClickListener(mClickHandler);
 
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
         tv.setTypeface(mTypeface);
         tv.setTextColor(mTextColor);
         return tv;

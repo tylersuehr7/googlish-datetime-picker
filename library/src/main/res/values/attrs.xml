@@ -2,6 +2,7 @@
 <resources>
     <declare-styleable name="DateTimePickerLayout">
         <attr name="android:textColor"/>
+        <attr name="android:textSize"/>
 
         <attr name="dtp_enableAutoValidate" format="boolean"/>
         <attr name="dtp_textMargin" format="dimension"/>
